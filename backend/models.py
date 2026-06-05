@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Numeric, Boolean, Date
-from .database import Base
+from database import Base
+
 
 class Inventario(Base):
     __tablename__ = "inventario"

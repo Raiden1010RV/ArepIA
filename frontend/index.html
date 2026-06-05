@@ -1,32 +1,321 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>ArepIA - Gestión de Inventario y Predicción</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArepIA - Gestión de Producción con IA</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h1>ArepIA</h1>
-  <h2>Predicción de Producción</h2>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo-section">
+                <div class="logo-icon">🥖</div>
+                <div class="header-title">
+                    <h1>ArepIA</h1>
+                    <p>Gestión Inteligente de Producción de Arepas</p>
+                </div>
+            </div>
+            <div class="header-status">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span id="systemStatus">Sistema Activo</span>
+                </div>
+            </div>
+        </div>
+    </header>
 
-  <form id="prediccion-form">
-    <label>Fecha:
-      <input type="date" id="fecha" required />
-    </label>
-    <br/>
-    <label>Clima:
-      <input type="text" id="clima" value="templado" />
-    </label>
-    <br/>
-    <label>¿Es festivo?
-      <input type="checkbox" id="es_festivo" />
-    </label>
-    <br/>
-    <button type="submit">Obtener predicción</button>
-  </form>
+    <div class="main-container">
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="dashboard">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-tab="inventario">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <span>Inventario</span>
+                </button>
+                <button class="nav-item" data-tab="ventas">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>Ventas</span>
+                </button>
+                <button class="nav-item" data-tab="prediccion">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span>Predicción IA</span>
+                </button>
+                <button class="nav-item" data-tab="variables">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg>
+                    <span>Variables Externas</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="quick-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Producción</span>
+                        <span class="stat-value" id="totalProduction">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Stock Bajo</span>
+                        <span class="stat-value alert" id="lowStock">0</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
 
-  <h3>Resultado:</h3>
-  <pre id="resultado"></pre>
+        <main class="content-area">
+            <!-- Dashboard Tab -->
+            <div id="dashboardTab" class="tab-content active">
+                <div class="section-header">
+                    <h2>Panel de Control</h2>
+                    <p>Visualiza métricas clave y predicciones de producción</p>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon blue">🥖</div>
+                        <div class="metric-content">
+                            <span class="metric-label">Producción Hoy</span>
+                            <span class="metric-value" id="todayProduction">0</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon green">📊</div>
+                        <div class="metric-content">
+                            <span class="metric-label">Ingresos Totales</span>
+                            <span class="metric-value" id="totalRevenue">$0</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon orange">📦</div>
+                        <div class="metric-content">
+                            <span class="metric-label">Artículos Inventario</span>
+                            <span class="metric-value" id="totalItems">0</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon purple">🤖</div>
+                        <div class="metric-content">
+                            <span class="metric-label">Recomendación IA</span>
+                            <span class="metric-value" id="aiRecommendation">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:1rem;">
+                    <h3>📈 Predicción de Producción Semanal</h3>
+                    <div id="predictionChart" style="padding:1rem;">
+                        <canvas id="chartCanvas" width="760" height="200"></canvas>
+                        <p id="chartEmpty" style="color:#999;text-align:center;padding:2rem 0;">
+                            Ve al módulo <strong>Predicción IA</strong> para obtener recomendaciones 🤖
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-  <script src="app.js"></script>
+            <!-- Inventario Tab -->
+            <div id="inventarioTab" class="tab-content">
+                <div class="section-header">
+                    <h2>Gestión de Inventario</h2>
+                    <p>Administra ingredientes y stock disponible</p>
+                </div>
+                <div class="card">
+                    <h3>Agregar Ingrediente</h3>
+                    <form id="ingredienteForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ingredienteName">Nombre</label>
+                                <input type="text" id="ingredienteName" placeholder="Ej: Harina de maíz" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ingredienteCantidad">Cantidad</label>
+                                <input type="number" id="ingredienteCantidad" placeholder="0" step="0.01" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ingredienteUnidad">Unidad</label>
+                                <select id="ingredienteUnidad">
+                                    <option value="kg">kg</option>
+                                    <option value="g">g</option>
+                                    <option value="L">L</option>
+                                    <option value="ml">ml</option>
+                                    <option value="unidad">unidad</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">+ Agregar Ingrediente</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card" style="margin-top:1rem;">
+                    <h3>Inventario Actual</h3>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Ingrediente</th>
+                                    <th>Cantidad</th>
+                                    <th>Unidad</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventarioBody">
+                                <tr class="empty-state"><td colspan="5">Sin ingredientes registrados</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ventas Tab -->
+            <div id="ventasTab" class="tab-content">
+                <div class="section-header">
+                    <h2>Registro de Ventas</h2>
+                    <p>Registra y visualiza histórico de ventas</p>
+                </div>
+                <div class="card">
+                    <h3>Nueva Venta</h3>
+                    <form id="ventaForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ventaFecha">Fecha</label>
+                                <input type="date" id="ventaFecha" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ventaTipo">Tipo de Arepa</label>
+                                <input type="text" id="ventaTipo" placeholder="Ej: Arepa de Queso" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ventaCantidad">Cantidad</label>
+                                <input type="number" id="ventaCantidad" placeholder="0" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ventaPrecio">Precio Unitario</label>
+                                <input type="number" id="ventaPrecio" placeholder="0.00" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">+ Registrar Venta</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card" style="margin-top:1rem;">
+                    <h3>Histórico de Ventas</h3>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo de Arepa</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ventasBody">
+                                <tr class="empty-state"><td colspan="5">Sin ventas registradas</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predicción IA Tab -->
+            <div id="prediccionTab" class="tab-content">
+                <div class="section-header">
+                    <h2>Predicción con IA</h2>
+                    <p>Obtén recomendaciones de producción basadas en variables externas</p>
+                </div>
+                <div class="card">
+                    <h3>Configurar Predicción</h3>
+                    <form id="prediccionForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="predFecha">Fecha a Predecir</label>
+                                <input type="date" id="predFecha" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="predClima">Clima</label>
+                                <select id="predClima">
+                                    <option value="templado">Templado</option>
+                                    <option value="soleado">Soleado</option>
+                                    <option value="lluvioso">Lluvioso</option>
+                                    <option value="nublado">Nublado</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="padding-top:1.5rem;">
+                                <label>
+                                    <input type="checkbox" id="predFestivo">
+                                    Es día festivo
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">🤖 Obtener Predicción</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Variables Externas Tab -->
+            <div id="variablesTab" class="tab-content">
+                <div class="section-header">
+                    <h2>Variables Externas</h2>
+                    <p>Registra condiciones externas que afectan la producción</p>
+                </div>
+                <div class="card">
+                    <h3>Registrar Variables del Día</h3>
+                    <form id="variablesForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="varFecha">Fecha</label>
+                                <input type="date" id="varFecha" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="varClima">Clima</label>
+                                <select id="varClima">
+                                    <option value="templado">Templado</option>
+                                    <option value="soleado">Soleado</option>
+                                    <option value="lluvioso">Lluvioso</option>
+                                    <option value="nublado">Nublado</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="padding-top:1.5rem;">
+                                <label>
+                                    <input type="checkbox" id="varFestivo">
+                                    Es día festivo
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">+ Registrar Variables</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card" style="margin-top:1rem;">
+                    <h3>Historial de Variables</h3>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Clima</th>
+                                    <th>Festivo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="variablesBody">
+                                <tr class="empty-state"><td colspan="3">Sin variables registradas</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
