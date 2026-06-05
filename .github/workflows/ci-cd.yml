@@ -16,6 +16,11 @@
 
 name: ArepIA CI/CD
 
+# Forzar Node.js 24 en todos los JavaScript actions
+# (Node 20 deprecado desde junio 2026, eliminado en septiembre 2026)
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches: [main]
@@ -42,7 +47,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Compute image tag
         id: tag
@@ -81,7 +86,7 @@ jobs:
             | gzip > docker-images.tar.gz
 
       - name: Upload images artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.4.3
         with:
           name: docker-images
           path: docker-images.tar.gz
@@ -96,10 +101,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Download Docker images
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.8
         with:
           name: docker-images
 
@@ -140,7 +145,7 @@ jobs:
           echo "✅ Análisis de código completado"
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.4.3
         if: always()
         with:
           name: coverage-report
@@ -162,7 +167,7 @@ jobs:
 
     steps:
       - name: Download Docker images
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.8
         with:
           name: docker-images
 
@@ -195,7 +200,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Deploy Backend a Render
         run: |
