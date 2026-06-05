@@ -126,21 +126,14 @@ fi
 echo ""
 echo "🚀 [3/4] Disparando deploy en Render..."
 
-# imageUrl en el body es requerido cuando el servicio es de tipo 'image' (registry).
-# Para servicios Dockerfile (git-based) el body puede ser vacío o solo clearCache.
-DEPLOY_PAYLOAD="{\"clearCache\": \"do_not_clear\", \"imageUrl\": \"${IMAGE_URL}\"}"
+# Para servicios Dockerfile (build-from-git) solo se envía clearCache.
+# Para servicios de tipo 'image' (registry) también funciona con este payload.
+DEPLOY_PAYLOAD='{"clearCache": "do_not_clear"}'
 
 DEPLOY_RESPONSE=$(render_api POST "/services/${RENDER_SERVICE_ID}/deploys" "$DEPLOY_PAYLOAD" 2>&1) || {
     echo "❌ Error al disparar el deploy"
-    echo "   Respuesta completa: $DEPLOY_RESPONSE"
-    echo ""
-    echo "   Intentando sin imageUrl (para servicios Dockerfile)..."
-    DEPLOY_PAYLOAD_SIMPLE='{"clearCache": "do_not_clear"}'
-    DEPLOY_RESPONSE=$(render_api POST "/services/${RENDER_SERVICE_ID}/deploys" "$DEPLOY_PAYLOAD_SIMPLE" 2>&1) || {
-        echo "❌ Deploy falló en ambos intentos"
-        echo "   Respuesta: $DEPLOY_RESPONSE"
-        exit 1
-    }
+    echo "   Respuesta: $DEPLOY_RESPONSE"
+    exit 1
 }
 
 DEPLOY_ID=$(echo "$DEPLOY_RESPONSE" | jq -r '.id // .deploy.id // ""' 2>/dev/null || echo "")

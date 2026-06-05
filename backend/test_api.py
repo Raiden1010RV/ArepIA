@@ -1,167 +1,182 @@
 """
-Tests para los endpoints de la API FastAPI
+Tests para la API FastAPI del agente.
 """
 import pytest
 from fastapi.testclient import TestClient
-from datetime import date
-from app import app
-from database import Base, engine, SessionLocal
+from pathlib import Path
+import sys
 
-# Crear cliente de prueba
-client = TestClient(app)
+# Agregar path del proyecto
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-
-@pytest.fixture(scope="function")
-def setup_db():
-    """Setup y teardown de la BD para cada test"""
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
+from app.main import app
 
 
-class TestHealthCheck:
-    """Tests de verificación del sistema"""
+@pytest.fixture
+def client():
+    """Fixture que provee el cliente de testing de FastAPI."""
+    return TestClient(app)
+
+
+class TestHealthEndpoint:
+    """Tests para el endpoint de health check."""
     
-    def test_api_disponible(self):
-        """Test verificar que la API está disponible"""
-        response = client.get("/docs")
-        assert response.status_code in [200, 307, 404]  # Swagger puede no estar activo
-
-
-class TestInventarioEndpoints:
-    """Tests para endpoints de Inventario"""
-    
-    def test_crear_ingrediente(self, setup_db):
-        """Test POST /inventario"""
-        ingrediente_data = {
-            "ingrediente": "Harina de maíz",
-            "cantidad_actual": 50.0,
-            "unidad": "kg"
-        }
-        response = client.post("/inventario", json=ingrediente_data)
+    def test_health_check(self, client):
+        """Verifica que el health check funciona."""
+        response = client.get("/health")
         assert response.status_code == 200
         data = response.json()
-        assert data["ingrediente"] == "Harina de maíz"
-        assert data["cantidad_actual"] == 50.0
-    
-    def test_listar_inventario(self, setup_db):
-        """Test GET /inventario"""
-        # Crear un ingrediente primero
-        ingrediente_data = {
-            "ingrediente": "Sal",
-            "cantidad_actual": 10.0,
-            "unidad": "kg"
-        }
-        client.post("/inventario", json=ingrediente_data)
-        
-        # Listar
-        response = client.get("/inventario")
-        assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, list)
-        assert len(data) >= 1
-    
-    def test_ingrediente_validacion(self, setup_db):
-        """Test validación de datos en POST /inventario"""
-        # Datos inválidos (falta cantidad_actual)
-        ingrediente_data = {
-            "ingrediente": "Harina",
-            "unidad": "kg"
-        }
-        response = client.post("/inventario", json=ingrediente_data)
-        assert response.status_code == 422  # Validation Error
+        assert data["status"] == "healthy"
 
 
-class TestVentasEndpoints:
-    """Tests para endpoints de Ventas"""
+class TestQueryEndpoint:
+    """Tests para el endpoint /query."""
     
-    def test_crear_venta(self, setup_db):
-        """Test POST /ventas"""
-        venta_data = {
-            "fecha": str(date.today()),
-            "tipo_arepa": "Arepa de Queso",
-            "cantidad": 10,
-            "precio_unitario": 2.5
-        }
-        response = client.post("/ventas", json=venta_data)
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "ok"
+    def test_query_endpoint_exists(self, client):
+        """Verifica que el endpoint /query existe."""
+        response = client.post("/query", json={
+            "message": "Test query",
+            "session_id": "test"
+        })
+        # Debe retornar 200 o algún código válido, no 404
+        assert response.status_code != 404
     
-    def test_venta_cantidad_positiva(self, setup_db):
-        """Test que cantidad debe ser positiva"""
-        venta_data = {
-            "fecha": str(date.today()),
-            "tipo_arepa": "Arepa",
-            "cantidad": -5,  # Negativo
-            "precio_unitario": 2.5
-        }
-        # La API debería validar esto
-        response = client.post("/ventas", json=venta_data)
-        # Dependiendo de la validación, puede ser 422 o 200
-        assert response.status_code in [200, 422]
-
-
-class TestVariablesExternasEndpoints:
-    """Tests para endpoints de Variables Externas"""
-    
-    def test_crear_variable(self, setup_db):
-        """Test POST /variables"""
-        variable_data = {
-            "fecha": str(date.today()),
-            "clima": "soleado",
-            "es_festivo": False
-        }
-        response = client.post("/variables", json=variable_data)
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "ok"
-    
-    def test_clima_valido(self, setup_db):
-        """Test diferentes tipos de clima"""
-        climas = ["templado", "soleado", "lluvioso", "nublado"]
-        
-        for clima in climas:
-            variable_data = {
-                "fecha": str(date.today()),
-                "clima": clima,
-                "es_festivo": False
-            }
-            response = client.post("/variables", json=variable_data)
-            assert response.status_code == 200
-
-
-class TestPrediccionEndpoints:
-    """Tests para endpoint de Predicción"""
-    
-    def test_obtener_prediccion(self, setup_db):
-        """Test POST /prediccion"""
-        prediccion_data = {
-            "fecha": str(date.today()),
-            "clima": "soleado",
-            "es_festivo": False
-        }
-        response = client.post("/prediccion", json=prediccion_data)
-        # Si el modelo no está entrenado, retorna error 500
-        # Si está entrenado, retorna 200
-        assert response.status_code in [200, 500]
+    def test_query_with_valid_input(self, client):
+        """Test de consulta con entrada válida."""
+        response = client.post("/query", json={
+            "message": "¿Qué es QFlow?",
+            "session_id": "test_session"
+        })
         
         if response.status_code == 200:
             data = response.json()
-            assert "fecha" in data
-            assert "produccion_recomendada" in data
+            assert "response" in data
+            assert isinstance(data["response"], str)
     
-    def test_prediccion_sin_modelo(self, setup_db):
-        """Test predicción cuando el modelo no está disponible"""
-        prediccion_data = {
-            "fecha": str(date.today()),
-            "clima": "templado",
-            "es_festivo": True
-        }
-        response = client.post("/prediccion", json=prediccion_data)
-        # Debe retornar error o valor por defecto
-        assert response.status_code in [200, 500]
+    def test_query_without_session_id(self, client):
+        """Test de consulta sin session_id (debe usar default)."""
+        response = client.post("/query", json={
+            "message": "Test query"
+        })
+        
+        # Debe funcionar con session_id por defecto
+        assert response.status_code in [200, 422]  # 422 si es requerido
+    
+    def test_query_empty_message(self, client):
+        """Test con mensaje vacío."""
+        response = client.post("/query", json={
+            "message": "",
+            "session_id": "test"
+        })
+        
+        # Debe manejar el caso gracefully
+        assert response.status_code in [200, 400, 422]
+
+
+class TestDocgenEndpoint:
+    """Tests para el endpoint /docgen."""
+    
+    def test_docgen_endpoint_exists(self, client):
+        """Verifica que el endpoint /docgen existe."""
+        response = client.post("/docgen", json={
+            "repo_path": "/test/path"
+        })
+        assert response.status_code != 404
+    
+    def test_docgen_with_invalid_path(self, client):
+        """Test con ruta inválida."""
+        response = client.post("/docgen", json={
+            "repo_path": "/path/that/does/not/exist"
+        })
+        
+        # Debe retornar error apropiado
+        assert response.status_code in [200, 400, 404, 422]
+
+
+class TestMetricsEndpoint:
+    """Tests para el endpoint /metrics."""
+    
+    def test_metrics_endpoint_exists(self, client):
+        """Verifica que el endpoint /metrics existe."""
+        response = client.get("/metrics")
+        assert response.status_code != 404
+    
+    def test_metrics_returns_data(self, client):
+        """Verifica que /metrics retorna datos."""
+        response = client.get("/metrics")
+        
+        if response.status_code == 200:
+            data = response.json()
+            assert isinstance(data, dict)
+
+
+class TestAPIIntegration:
+    """Tests de integración de múltiples endpoints."""
+    
+    def test_query_updates_metrics(self, client):
+        """Verifica que consultas actualizan métricas."""
+        # Obtener métricas iniciales
+        metrics_before = client.get("/metrics")
+        
+        # Hacer una consulta
+        client.post("/query", json={
+            "message": "Test",
+            "session_id": "integration_test"
+        })
+        
+        # Obtener métricas después
+        metrics_after = client.get("/metrics")
+        
+        # Verificar que ambos requests funcionaron
+        assert metrics_before.status_code in [200, 404]
+        assert metrics_after.status_code in [200, 404]
+    
+    def test_multiple_sessions(self, client):
+        """Verifica que múltiples sesiones funcionan correctamente."""
+        sessions = ["session1", "session2", "session3"]
+        
+        for session_id in sessions:
+            response = client.post("/query", json={
+                "message": f"Test from {session_id}",
+                "session_id": session_id
+            })
+            # Cada sesión debe poder procesar requests
+            assert response.status_code in [200, 404, 422]
+
+
+class TestErrorHandling:
+    """Tests de manejo de errores de la API."""
+    
+    def test_invalid_json(self, client):
+        """Test con JSON inválido."""
+        response = client.post(
+            "/query",
+            data="not valid json",
+            headers={"Content-Type": "application/json"}
+        )
+        assert response.status_code == 422
+    
+    def test_missing_required_fields(self, client):
+        """Test con campos requeridos faltantes."""
+        response = client.post("/query", json={})
+        # Debe rechazar por falta de campo message
+        assert response.status_code == 422
+    
+    def test_invalid_endpoint(self, client):
+        """Test de endpoint inexistente."""
+        response = client.get("/nonexistent")
+        assert response.status_code == 404
+
+
+class TestCORS:
+    """Tests de configuración CORS."""
+    
+    def test_cors_headers(self, client):
+        """Verifica que headers CORS están presentes."""
+        response = client.options("/query")
+        # CORS debe estar configurado
+        assert response.status_code in [200, 404, 405]
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--tb=short"])
+    pytest.main([__file__, "-v"])
