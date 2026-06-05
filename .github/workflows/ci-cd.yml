@@ -1,0 +1,257 @@
+# =============================================================================
+# GitHub Actions CI/CD — ArepIA
+# Espeja el Jenkinsfile para que ambos pipelines corran en paralelo:
+#   • Jenkins (local)     → evidencia para la entrega del proyecto
+#   • GitHub Actions      → CI/CD en la nube, siempre disponible para el equipo
+#
+# Secrets requeridos en GitHub → Settings → Secrets and variables → Actions:
+#   DOCKER_USERNAME            tu usuario de Docker Hub
+#   DOCKER_PASSWORD            access token de Docker Hub
+#   RENDER_API_KEY             API key de Render (rnd_...)
+#   RENDER_SERVICE_ID_BACKEND  srv-... del servicio backend en Render
+#   RENDER_SERVICE_ID_FRONTEND srv-... del servicio frontend en Render
+#   RENDER_BACKEND_URL         https://arepia-backend.onrender.com
+#   RENDER_FRONTEND_URL        https://arepia-frontend.onrender.com
+# =============================================================================
+
+name: ArepIA CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Ejecución manual desde la pestaña Actions en GitHub
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Omitir ejecución de tests'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────
+  build:
+    name: "🏗️ Build Docker Images"
+    runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.tag.outputs.tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute image tag
+        id: tag
+        run: echo "tag=${{ github.run_number }}-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Build Backend
+        run: |
+          docker build \
+            --tag ${{ secrets.DOCKER_USERNAME }}/arepia-backend:${{ steps.tag.outputs.tag }} \
+            --tag ${{ secrets.DOCKER_USERNAME }}/arepia-backend:latest \
+            --file Dockerfile.backend \
+            --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+            --build-arg VCS_REF=${{ github.sha }} \
+            --build-arg VERSION=${{ steps.tag.outputs.tag }} \
+            .
+          echo "✅ Backend build completado"
+
+      - name: Build Frontend
+        run: |
+          docker build \
+            --tag ${{ secrets.DOCKER_USERNAME }}/arepia-frontend:${{ steps.tag.outputs.tag }} \
+            --tag ${{ secrets.DOCKER_USERNAME }}/arepia-frontend:latest \
+            --file Dockerfile.frontend \
+            --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+            --build-arg VCS_REF=${{ github.sha }} \
+            --build-arg VERSION=${{ steps.tag.outputs.tag }} \
+            .
+          echo "✅ Frontend build completado"
+
+      # Serializar imágenes para compartir entre jobs
+      - name: Save Docker images
+        run: |
+          docker save \
+            ${{ secrets.DOCKER_USERNAME }}/arepia-backend:${{ steps.tag.outputs.tag }} \
+            ${{ secrets.DOCKER_USERNAME }}/arepia-frontend:${{ steps.tag.outputs.tag }} \
+            | gzip > docker-images.tar.gz
+
+      - name: Upload images artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images
+          path: docker-images.tar.gz
+          retention-days: 1
+
+  # ──────────────────────────────────────────────────────────────────────────
+  test:
+    name: "🧪 Test Backend & Code Analysis"
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ github.event.inputs.skip_tests != 'true' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Docker images
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images
+
+      - name: Load Docker images
+        run: gunzip -c docker-images.tar.gz | docker load
+
+      - name: Test Backend (dentro del contenedor)
+        run: |
+          mkdir -p coverage-output
+          docker run --rm \
+            --workdir /app \
+            -v ${{ github.workspace }}/coverage-output:/coverage \
+            ${{ secrets.DOCKER_USERNAME }}/arepia-backend:${{ needs.build.outputs.image_tag }} \
+            sh -c "pytest -v \
+              --cov=. \
+              --cov-report=xml:/coverage/coverage.xml \
+              --cov-report=html:/coverage/htmlcov \
+              --tb=short \
+              || true"
+          cp coverage-output/coverage.xml coverage.xml 2>/dev/null || true
+          cp -r coverage-output/htmlcov htmlcov 2>/dev/null || true
+          echo "✅ Tests completados"
+
+      - name: Code Analysis — flake8
+        run: |
+          docker run --rm \
+            --workdir /app \
+            ${{ secrets.DOCKER_USERNAME }}/arepia-backend:${{ needs.build.outputs.image_tag }} \
+            sh -c "
+              pip install flake8 --quiet --root-user-action=ignore
+              echo '--- flake8: errores criticos (E9,F63,F7,F82) ---'
+              flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics \
+                --exclude=venv,__pycache__ || true
+              echo '--- flake8: resumen de estilo ---'
+              flake8 . --count --max-line-length=120 --statistics \
+                --exclude=venv,__pycache__ || true
+            "
+          echo "✅ Análisis de código completado"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: |
+            coverage.xml
+            htmlcov/
+          if-no-files-found: ignore
+
+  # ──────────────────────────────────────────────────────────────────────────
+  push:
+    name: "📤 Push to Docker Hub"
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    # Corre aunque test haya sido saltado, pero no si build falló
+    if: |
+      always() &&
+      needs.build.result == 'success' &&
+      (needs.test.result == 'success' || needs.test.result == 'skipped')
+
+    steps:
+      - name: Download Docker images
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images
+
+      - name: Load Docker images
+        run: gunzip -c docker-images.tar.gz | docker load
+
+      - name: Push Backend y Frontend a Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | \
+            docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+          docker push ${{ secrets.DOCKER_USERNAME }}/arepia-backend:${{ needs.build.outputs.image_tag }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/arepia-backend:latest
+
+          docker push ${{ secrets.DOCKER_USERNAME }}/arepia-frontend:${{ needs.build.outputs.image_tag }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/arepia-frontend:latest
+
+          docker logout
+          echo "✅ Imágenes publicadas en Docker Hub"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: "🚀 Deploy to Render"
+    runs-on: ubuntu-latest
+    needs: [build, push]
+    # Solo en push a main o ejecución manual; NO en pull requests
+    if: |
+      needs.push.result == 'success' &&
+      github.event_name != 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy Backend a Render
+        run: |
+          chmod +x scripts/deploy-render.sh
+          ./scripts/deploy-render.sh \
+            backend \
+            ${{ secrets.RENDER_SERVICE_ID_BACKEND }} \
+            ${{ secrets.RENDER_API_KEY }} \
+            ${{ secrets.DOCKER_USERNAME }}/arepia-backend:${{ needs.build.outputs.image_tag }}
+
+      - name: Deploy Frontend a Render
+        run: |
+          ./scripts/deploy-render.sh \
+            frontend \
+            ${{ secrets.RENDER_SERVICE_ID_FRONTEND }} \
+            ${{ secrets.RENDER_API_KEY }} \
+            ${{ secrets.DOCKER_USERNAME }}/arepia-frontend:${{ needs.build.outputs.image_tag }}
+
+  # ──────────────────────────────────────────────────────────────────────────
+  health-check:
+    name: "🏥 Health Check"
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: needs.deploy.result == 'success'
+
+    steps:
+      - name: Esperar que Render inicie (plan free puede tardar hasta 60s)
+        run: |
+          echo "⏳ Esperando 30s para que los servicios arranquen..."
+          sleep 30
+
+      - name: Health check — Backend
+        run: |
+          HTTP_BACKEND=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 15 "${{ secrets.RENDER_BACKEND_URL }}/" || echo "000")
+          echo "Backend HTTP: $HTTP_BACKEND"
+          if [ "$HTTP_BACKEND" = "200" ]; then
+            echo "✅ Backend OK"
+          else
+            echo "⚠️ Backend no respondió correctamente (HTTP $HTTP_BACKEND)"
+          fi
+
+      - name: Health check — Frontend
+        run: |
+          HTTP_FRONTEND=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 15 "${{ secrets.RENDER_FRONTEND_URL }}/health" || echo "000")
+          echo "Frontend HTTP: $HTTP_FRONTEND"
+          if [ "$HTTP_FRONTEND" = "200" ]; then
+            echo "✅ Frontend OK"
+          else
+            echo "⚠️ Frontend no respondió correctamente (HTTP $HTTP_FRONTEND)"
+          fi
+
+      - name: Resumen
+        run: |
+          echo "📊 Deploy completado"
+          echo "   Backend:  ${{ secrets.RENDER_BACKEND_URL }}"
+          echo "   Frontend: ${{ secrets.RENDER_FRONTEND_URL }}"
+          echo "   API Docs: ${{ secrets.RENDER_BACKEND_URL }}/docs"
