@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArepIA - Gestión de Producción con IA</title>
+    <title>ArepIA - Gestion de Produccion con IA</title>
+    <!-- Favicon: arepa (pan plano redondo dorado) dibujado en SVG -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2255%22%20r%3D%2242%22%20fill%3D%22%23B5720A%22%2F%3E%3Cellipse%20cx%3D%2250%22%20cy%3D%2249%22%20rx%3D%2238%22%20ry%3D%2234%22%20fill%3D%22%23D4900E%22%2F%3E%3Cellipse%20cx%3D%2250%22%20cy%3D%2246%22%20rx%3D%2228%22%20ry%3D%2224%22%20fill%3D%22%23EDB830%22%2F%3E%3Cellipse%20cx%3D%2250%22%20cy%3D%2244%22%20rx%3D%2216%22%20ry%3D%2212%22%20fill%3D%22%23F5D060%22%20opacity%3D%220.65%22%2F%3E%3C%2Fsvg%3E">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,10 +15,11 @@
     <header class="header">
         <div class="header-container">
             <div class="logo-section">
-                <div class="logo-icon">🥖</div>
+                <!-- &#x1FAD3; = flatbread / arepa emoji -->
+                <div class="logo-icon">&#x1FAD3;</div>
                 <div class="header-title">
                     <h1>ArepIA</h1>
-                    <p>Gestión Inteligente de Producción de Arepas</p>
+                    <p>Gesti&#xF3;n Inteligente de Producci&#xF3;n de Arepas</p>
                 </div>
             </div>
             <div class="header-status">
@@ -45,7 +48,7 @@
                 </button>
                 <button class="nav-item" data-tab="prediccion">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    <span>Predicción IA</span>
+                    <span>Predicci&#xF3;n IA</span>
                 </button>
                 <button class="nav-item" data-tab="variables">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg>
@@ -55,7 +58,7 @@
             <div class="sidebar-footer">
                 <div class="quick-stats">
                     <div class="stat-item">
-                        <span class="stat-label">Total Producción</span>
+                        <span class="stat-label">Total Producci&#xF3;n</span>
                         <span class="stat-value" id="totalProduction">0</span>
                     </div>
                     <div class="stat-item">
@@ -71,44 +74,45 @@
             <div id="dashboardTab" class="tab-content active">
                 <div class="section-header">
                     <h2>Panel de Control</h2>
-                    <p>Visualiza métricas clave y predicciones de producción</p>
+                    <p>Visualiza m&#xE9;tricas clave y predicciones de producci&#xF3;n</p>
                 </div>
                 <div class="metrics-grid">
                     <div class="metric-card">
-                        <div class="metric-icon blue">🥖</div>
+                        <!-- &#x1FAD3; = flatbread / arepa emoji -->
+                        <div class="metric-icon blue">&#x1FAD3;</div>
                         <div class="metric-content">
-                            <span class="metric-label">Producción Hoy</span>
+                            <span class="metric-label">Producci&#xF3;n Hoy</span>
                             <span class="metric-value" id="todayProduction">0</span>
                         </div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-icon green">📊</div>
+                        <div class="metric-icon green">&#x1F4CA;</div>
                         <div class="metric-content">
                             <span class="metric-label">Ingresos Totales</span>
                             <span class="metric-value" id="totalRevenue">$0</span>
                         </div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-icon orange">📦</div>
+                        <div class="metric-icon orange">&#x1F4E6;</div>
                         <div class="metric-content">
-                            <span class="metric-label">Artículos Inventario</span>
+                            <span class="metric-label">Art&#xED;culos Inventario</span>
                             <span class="metric-value" id="totalItems">0</span>
                         </div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-icon purple">🤖</div>
+                        <div class="metric-icon purple">&#x1F916;</div>
                         <div class="metric-content">
-                            <span class="metric-label">Recomendación IA</span>
+                            <span class="metric-label">Recomendaci&#xF3;n IA</span>
                             <span class="metric-value" id="aiRecommendation">-</span>
                         </div>
                     </div>
                 </div>
                 <div class="card" style="margin-top:1rem;">
-                    <h3>📈 Predicción de Producción Semanal</h3>
+                    <h3>&#x1F4C8; Predicci&#xF3;n de Producci&#xF3;n Semanal</h3>
                     <div id="predictionChart" style="padding:1rem;">
                         <canvas id="chartCanvas" width="760" height="200"></canvas>
                         <p id="chartEmpty" style="color:#999;text-align:center;padding:2rem 0;">
-                            Ve al módulo <strong>Predicción IA</strong> para obtener recomendaciones 🤖
+                            Ve al m&#xF3;dulo <strong>Predicci&#xF3;n IA</strong> para obtener recomendaciones &#x1F916;
                         </p>
                     </div>
                 </div>
@@ -117,7 +121,7 @@
             <!-- Inventario Tab -->
             <div id="inventarioTab" class="tab-content">
                 <div class="section-header">
-                    <h2>Gestión de Inventario</h2>
+                    <h2>Gesti&#xF3;n de Inventario</h2>
                     <p>Administra ingredientes y stock disponible</p>
                 </div>
                 <div class="card">
@@ -126,7 +130,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="ingredienteName">Nombre</label>
-                                <input type="text" id="ingredienteName" placeholder="Ej: Harina de maíz" required>
+                                <input type="text" id="ingredienteName" placeholder="Ej: Harina de maiz" required>
                             </div>
                             <div class="form-group">
                                 <label for="ingredienteCantidad">Cantidad</label>
@@ -173,7 +177,7 @@
             <div id="ventasTab" class="tab-content">
                 <div class="section-header">
                     <h2>Registro de Ventas</h2>
-                    <p>Registra y visualiza histórico de ventas</p>
+                    <p>Registra y visualiza hist&#xF3;rico de ventas</p>
                 </div>
                 <div class="card">
                     <h3>Nueva Venta</h3>
@@ -202,7 +206,7 @@
                     </form>
                 </div>
                 <div class="card" style="margin-top:1rem;">
-                    <h3>Histórico de Ventas</h3>
+                    <h3>Hist&#xF3;rico de Ventas</h3>
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
@@ -222,14 +226,14 @@
                 </div>
             </div>
 
-            <!-- Predicción IA Tab -->
+            <!-- Prediccion IA Tab -->
             <div id="prediccionTab" class="tab-content">
                 <div class="section-header">
-                    <h2>Predicción con IA</h2>
-                    <p>Obtén recomendaciones de producción basadas en variables externas</p>
+                    <h2>Predicci&#xF3;n con IA</h2>
+                    <p>Obt&#xE9;n recomendaciones de producci&#xF3;n basadas en variables externas</p>
                 </div>
                 <div class="card">
-                    <h3>Configurar Predicción</h3>
+                    <h3>Configurar Predicci&#xF3;n</h3>
                     <form id="prediccionForm">
                         <div class="form-row">
                             <div class="form-group">
@@ -241,6 +245,8 @@
                                 <select id="predClima">
                                     <option value="templado">Templado</option>
                                     <option value="soleado">Soleado</option>
+                                    <option value="lluvioso">Lluvioso
+                                    <option value="soleado">Soleado</option>
                                     <option value="lluvioso">Lluvioso</option>
                                     <option value="nublado">Nublado</option>
                                 </select>
@@ -248,25 +254,23 @@
                             <div class="form-group" style="padding-top:1.5rem;">
                                 <label>
                                     <input type="checkbox" id="predFestivo">
-                                    Es día festivo
+                                    Es d&#xED;a festivo
                                 </label>
                             </div>
                         </div>
                         <div class="form-actions">
-                            <button type="submit" class="btn-primary">🤖 Obtener Predicción</button>
+                            <button type="submit" class="btn-primary">&#x1F916; Obtener Predicci&#xF3;n</button>
                         </div>
                     </form>
                 </div>
             </div>
-
-            <!-- Variables Externas Tab -->
             <div id="variablesTab" class="tab-content">
                 <div class="section-header">
                     <h2>Variables Externas</h2>
-                    <p>Registra condiciones externas que afectan la producción</p>
+                    <p>Registra condiciones externas que afectan la producci&#xF3;n</p>
                 </div>
                 <div class="card">
-                    <h3>Registrar Variables del Día</h3>
+                    <h3>Registrar Variables del D&#xED;a</h3>
                     <form id="variablesForm">
                         <div class="form-row">
                             <div class="form-group">
@@ -285,7 +289,7 @@
                             <div class="form-group" style="padding-top:1.5rem;">
                                 <label>
                                     <input type="checkbox" id="varFestivo">
-                                    Es día festivo
+                                    Es d&#xED;a festivo
                                 </label>
                             </div>
                         </div>
@@ -298,24 +302,11 @@
                     <h3>Historial de Variables</h3>
                     <div class="table-responsive">
                         <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Clima</th>
-                                    <th>Festivo</th>
-                                </tr>
-                            </thead>
-                            <tbody id="variablesBody">
-                                <tr class="empty-state"><td colspan="3">Sin variables registradas</td></tr>
-                            </tbody>
+                            <thead><tr><th>Fecha</th><th>Clima</th><th>Festivo</th></tr></thead>
+                            <tbody id="var                            <tbod                                     <tbodls                            <tbody id="var                            <tbod    >
                         </table>
-                    </div>
-                </div>
-            </div>
-
-        </main>
+                                                                                 in>
     </div>
-
     <script src="env-config.js"></script>
     <script src="app.js"></script>
 </body>
