@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<<<<<<< HEAD
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArepIA - Gestión de Producción con IA</title>
@@ -317,5 +318,34 @@
     </div>
 
     <script src="app.js"></script>
+=======
+  <meta charset="UTF-8" />
+  <title>ArepIA - Gestión de Inventario y Predicción</title>
+</head>
+<body>
+  <h1>ArepIA</h1>
+  <h2>Predicción de Producción</h2>
+
+  <form id="prediccion-form">
+    <label>Fecha:
+      <input type="date" id="fecha" required />
+    </label>
+    <br/>
+    <label>Clima:
+      <input type="text" id="clima" value="templado" />
+    </label>
+    <br/>
+    <label>¿Es festivo?
+      <input type="checkbox" id="es_festivo" />
+    </label>
+    <br/>
+    <button type="submit">Obtener predicción</button>
+  </form>
+
+  <h3>Resultado:</h3>
+  <pre id="resultado"></pre>
+
+  <script src="app.js"></script>
+>>>>>>> c2ca4c11435fcf1a05b11058b0adfbe4a0d70b04
 </body>
 </html>
