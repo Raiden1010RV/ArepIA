@@ -7,9 +7,13 @@
  */
 
 // ── Configuración dinámica de la URL del backend ──────────────────────────
-const API_URL = (window.APP_CONFIG && window.APP_CONFIG.API_URL &&
-                 window.APP_CONFIG.API_URL !== 'BACKEND_URL_PLACEHOLDER')
-  ? window.APP_CONFIG.API_URL
+// Prioridad:
+//  1. window.APP_CONFIG.API_URL  (inyectado por docker-entrypoint.sh via BACKEND_URL env var)
+//  2. /api  (proxy nginx — funciona cuando frontend y backend corren en el mismo dominio)
+//  3. http://localhost:8000  (desarrollo local sin Docker)
+const _rawApiUrl = (window.APP_CONFIG && window.APP_CONFIG.API_URL) || '';
+const API_URL = (_rawApiUrl && _rawApiUrl !== 'BACKEND_URL_PLACEHOLDER')
+  ? _rawApiUrl.replace(/\/$/, '')   // quita trailing slash si hay
   : 'http://localhost:8000';
 
 const CONFIG = {
@@ -46,15 +50,27 @@ async function apiPost(path, body) {
   return res.json();
 }
 
+// ── Formatear moneda en formato colombiano: 2000 → $2.000,00 ─────────────────
+// Locale es-CO: separador de miles = punto, decimal = coma, símbolo = $
+function formatCurrency(value) {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(parseFloat(value || 0));
+}
+
 // ── Verificar conexión con el backend ───────────────────────────────────────
 async function checkBackendStatus() {
+  console.log(`🔗 Intentando conectar al backend: ${CONFIG.API_URL}`);
   try {
     await apiGet('/');
     APP_STATE.backendOnline = true;
     const dot = document.querySelector('.status-dot');
     const label = document.getElementById('systemStatus');
     if (dot) dot.style.background = '#06D6A0';
-    if (label) label.textContent = 'Backend Conectado';
+    if (label) label.textContent = `Backend Conectado`;
     console.log(`✅ Backend conectado en: ${CONFIG.API_URL}`);
   } catch (e) {
     APP_STATE.backendOnline = false;
@@ -62,7 +78,8 @@ async function checkBackendStatus() {
     const label = document.getElementById('systemStatus');
     if (dot) dot.style.background = '#EF476F';
     if (label) label.textContent = 'Modo Offline';
-    console.warn(`⚠️ Backend no disponible (${CONFIG.API_URL}). Usando datos locales.`);
+    console.warn(`⚠️ Backend no disponible (${CONFIG.API_URL}): ${e.message}`);
+    console.warn('💡 Si estás en Render, configura la variable de entorno BACKEND_URL=https://arepia-backend.onrender.com en el servicio frontend.');
   }
 }
 
@@ -239,8 +256,8 @@ function renderVentas() {
     <td>${item.fecha}</td>
     <td>${item.tipo_arepa}</td>
     <td>${item.cantidad}</td>
-    <td>$${parseFloat(item.precio_unitario).toFixed(2)}</td>
-    <td><strong>$${parseFloat(item.total).toFixed(2)}</strong></td>
+    <td>${formatCurrency(item.precio_unitario)}</td>
+    <td><strong>${formatCurrency(item.total)}</strong></td>
   </tr>`).join('');
 
   updateMetrics();
@@ -481,7 +498,7 @@ function updateMetrics() {
   const el = id => document.getElementById(id);
   if (el('totalProduction')) el('totalProduction').textContent = totalProd;
   if (el('todayProduction'))  el('todayProduction').textContent = totalProd;
-  if (el('totalRevenue'))     el('totalRevenue').textContent = `$${totalRev.toFixed(2)}`;
+  if (el('totalRevenue'))     el('totalRevenue').textContent = formatCurrency(totalRev);
   if (el('totalItems'))       el('totalItems').textContent = totalItems;
   if (el('lowStock'))         el('lowStock').textContent = lowStock;
 }
