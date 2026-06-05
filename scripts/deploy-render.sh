@@ -36,24 +36,40 @@ echo "   Imagen   : $IMAGE_URL"
 echo "════════════════════════════════════════════════════════"
 
 # ── Función helper para llamadas a la API ────────────────────────────────────
+# Nota: NO se usa -f para que la respuesta del cuerpo sea visible en errores 4xx/5xx.
+# Se captura el HTTP status code por separado para manejar errores correctamente.
 render_api() {
     local METHOD="$1"
     local ENDPOINT="$2"
     local DATA="${3:-}"
+    local TMP_BODY
+    TMP_BODY=$(mktemp)
+    local HTTP_STATUS
 
     if [ -n "$DATA" ]; then
-        curl -sf -X "$METHOD" \
+        HTTP_STATUS=$(curl -s -o "$TMP_BODY" -w "%{http_code}" -X "$METHOD" \
             "${RENDER_API_URL}${ENDPOINT}" \
             -H "Authorization: Bearer ${RENDER_API_KEY}" \
             -H "Content-Type: application/json" \
             -H "Accept: application/json" \
-            -d "$DATA"
+            -d "$DATA")
     else
-        curl -sf -X "$METHOD" \
+        HTTP_STATUS=$(curl -s -o "$TMP_BODY" -w "%{http_code}" -X "$METHOD" \
             "${RENDER_API_URL}${ENDPOINT}" \
             -H "Authorization: Bearer ${RENDER_API_KEY}" \
-            -H "Accept: application/json"
+            -H "Accept: application/json")
     fi
+
+    cat "$TMP_BODY"
+    rm -f "$TMP_BODY"
+
+    # Falla si el status code es 4xx o 5xx
+    if [ "$HTTP_STATUS" -ge 400 ]; then
+        echo "" >&2
+        echo "   HTTP Status: $HTTP_STATUS" >&2
+        return 1
+    fi
+    return 0
 }
 
 # ── Paso 1: Verificar que el servicio existe ─────────────────────────────────
@@ -110,12 +126,21 @@ fi
 echo ""
 echo "🚀 [3/4] Disparando deploy en Render..."
 
-DEPLOY_PAYLOAD='{"clearCache": false}'
+# imageUrl en el body es requerido cuando el servicio es de tipo 'image' (registry).
+# Para servicios Dockerfile (git-based) el body puede ser vacío o solo clearCache.
+DEPLOY_PAYLOAD="{\"clearCache\": \"do_not_clear\", \"imageUrl\": \"${IMAGE_URL}\"}"
 
 DEPLOY_RESPONSE=$(render_api POST "/services/${RENDER_SERVICE_ID}/deploys" "$DEPLOY_PAYLOAD" 2>&1) || {
     echo "❌ Error al disparar el deploy"
-    echo "   Respuesta: $DEPLOY_RESPONSE"
-    exit 1
+    echo "   Respuesta completa: $DEPLOY_RESPONSE"
+    echo ""
+    echo "   Intentando sin imageUrl (para servicios Dockerfile)..."
+    DEPLOY_PAYLOAD_SIMPLE='{"clearCache": "do_not_clear"}'
+    DEPLOY_RESPONSE=$(render_api POST "/services/${RENDER_SERVICE_ID}/deploys" "$DEPLOY_PAYLOAD_SIMPLE" 2>&1) || {
+        echo "❌ Deploy falló en ambos intentos"
+        echo "   Respuesta: $DEPLOY_RESPONSE"
+        exit 1
+    }
 }
 
 DEPLOY_ID=$(echo "$DEPLOY_RESPONSE" | jq -r '.id // .deploy.id // ""' 2>/dev/null || echo "")
