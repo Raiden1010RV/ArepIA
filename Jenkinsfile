@@ -3,7 +3,8 @@ pipeline {
 
     environment {
         // Docker Registry Configuration
-        DOCKER_REGISTRY = credentials('docker-registry-url')   // e.g., docker.io
+        // DOCKER_REGISTRY: no se usa en ningún stage; si tu registry no es Docker Hub
+        // agrégalo aquí como: DOCKER_REGISTRY = credentials('docker-registry-url')
         DOCKER_USERNAME = credentials('docker-username')
         DOCKER_PASSWORD = credentials('docker-password')
 
@@ -363,11 +364,17 @@ pipeline {
         always {
             script {
                 echo '🧹 Limpiando recursos locales de Docker...'
-                sh """
-                    docker rmi ${IMAGE_NAME_BACKEND}:${IMAGE_TAG} || true
-                    docker rmi ${IMAGE_NAME_FRONTEND}:${IMAGE_TAG} || true
-                    docker system prune -f || true
-                """
+                // Guard: si el env-block falló (credencial faltante, etc.) estas variables
+                // no estarán definidas — evita MissingPropertyException en el post always.
+                if (env.IMAGE_NAME_BACKEND && env.IMAGE_TAG) {
+                    sh """
+                        docker rmi ${IMAGE_NAME_BACKEND}:${IMAGE_TAG} || true
+                        docker rmi ${IMAGE_NAME_FRONTEND}:${IMAGE_TAG} || true
+                        docker system prune -f || true
+                    """
+                } else {
+                    echo '⚠️  Variables de imagen no definidas — se omite limpieza Docker.'
+                }
             }
             // Archivar artefactos de test si existen
             archiveArtifacts artifacts: 'htmlcov/**', allowEmptyArchive: true
