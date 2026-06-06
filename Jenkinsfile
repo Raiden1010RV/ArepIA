@@ -8,10 +8,6 @@ pipeline {
         DOCKER_USERNAME = credentials('docker-username')
         DOCKER_PASSWORD = credentials('docker-password')
 
-        // GitHub Configuration
-        GITHUB_TOKEN       = credentials('github-token')
-        GITHUB_REPO        = credentials('github-repo')        // e.g., tu-usuario/arepIA
-
         // Render Configuration
         RENDER_API_KEY              = credentials('render-api-key')
         RENDER_SERVICE_ID_BACKEND   = credentials('render-service-id-backend')
@@ -53,23 +49,10 @@ pipeline {
     stages {
 
         // ─────────────────────────────────────────────
-        stage('Checkout') {
+        // NOTA: el checkout de SCM lo realiza Jenkins automáticamente
+        // en la etapa "Declarative: Checkout SCM" antes de cualquier stage.
+        // No se necesita un stage de Checkout explícito.
         // ─────────────────────────────────────────────
-            steps {
-                script {
-                    echo '🔄 Clonando repositorio desde GitHub...'
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: '*/main']],
-                        userRemoteConfigs: [[
-                            url: "https://github.com/${GITHUB_REPO}.git",
-                            credentialsId: 'github-credentials'
-                        ]]
-                    ])
-                    echo "✅ Checkout completado — commit: ${GIT_COMMIT.take(7)}"
-                }
-            }
-        }
 
         // ─────────────────────────────────────────────
         stage('Build Backend') {
