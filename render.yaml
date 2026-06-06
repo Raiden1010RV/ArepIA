@@ -1,0 +1,78 @@
+# =============================================================================
+# Render Blueprint — arepIA
+# Documentación: https://render.com/docs/blueprint-spec
+#
+# Uso:
+#   1. Sube este archivo al repositorio GitHub
+#   2. En Render: Dashboard → New → Blueprint
+#   3. Conecta el repositorio y Render creará todos los servicios automáticamente
+# =============================================================================
+
+version: "1"  # Versión del Blueprint spec
+
+services:
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # BACKEND — FastAPI + ML
+  # ──────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: arepia-backend
+    runtime: image
+    image:
+      url: docker.io/TU_USUARIO_DOCKER/arepia-backend:latest
+      # ↑ Render actualizará esta imagen cada vez que el pipeline de Jenkins
+      #   haga push a Docker Hub y llame al API de deploy
+    region: oregon          # Opciones: oregon, frankfurt, singapore, ohio
+    plan: free              # Opciones: free, starter, standard, pro
+    branch: main
+    healthCheckPath: /
+    numInstances: 1
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: arepia-db
+          property: connectionString
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: PORT
+        value: "8000"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # FRONTEND — Nginx + HTML/JS/CSS
+  # ──────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: arepia-frontend
+    runtime: image
+    image:
+      url: docker.io/TU_USUARIO_DOCKER/arepia-frontend:latest
+    region: oregon
+    plan: free
+    branch: main
+    healthCheckPath: /health
+    numInstances: 1
+    envVars:
+      - key: BACKEND_URL
+        fromService:
+          name: arepia-backend
+          type: web
+          property: host
+      # La URL completa del backend se construye como:
+      # https://<host del servicio arepia-backend>
+
+# ──────────────────────────────────────────────────────────────────────────
+# BASE DE DATOS PostgreSQL
+# ──────────────────────────────────────────────────────────────────────────
+databases:
+  - name: arepia-db
+    region: oregon
+    plan: free              # PostgreSQL 256MB gratis en Render
+    databaseName: arepia
+    user: arepia_user
+    # La password se genera automáticamente por Render
+    # La connectionString se inyecta en el backend vía envVars → fromDatabase

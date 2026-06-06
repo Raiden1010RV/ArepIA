@@ -8,22 +8,42 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar requirements e instalar dependencias
+# Copiar requirements e instalar dependencias de Python
 COPY backend/requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copiar código del backend directamente en /app
+# Copiar código del backend
 COPY backend/ .
+
+# Copiar el modelo ML entrenado (si existe)
+# El modelo se genera con: python ml/train_model.py
+COPY ml/ /app/ml/
 
 # Variables de entorno
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    PORT=8000
+
+# Argumentos de build para trazabilidad
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION
+
+# Labels OCI estándar
+LABEL org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.title="ArepIA Backend" \
+      org.opencontainers.image.description="FastAPI backend para sistema de gestión de arepas con ML"
+
+# Exponer puerto
+EXPOSE 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD curl -f http://localhost:8000/ || exit 1
 
-# Ejecutar app directamente como módulo
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Ejecutar la aplicación
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
