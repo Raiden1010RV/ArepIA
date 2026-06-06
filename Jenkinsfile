@@ -101,35 +101,35 @@ pipeline {
         // ─────────────────────────────────────────────
         stage('Test Backend') {
         // ─────────────────────────────────────────────
+            // Los tests se ejecutan DENTRO de la imagen Docker ya construida:
+            // - Evita dependencia de python3-venv en el host del agente Jenkins
+            // - Garantiza el mismo entorno que producción
             when {
                 expression { return !params.SKIP_TESTS }
             }
             steps {
                 script {
-                    echo '🧪 Ejecutando tests del Backend...'
-                    dir('backend') {
-                        sh '''
-                            python3 -m venv venv
-                            . venv/bin/activate
-                            pip install --upgrade pip --quiet
-                            pip install -r requirements.txt --quiet
-                            pip install pytest pytest-cov httpx --quiet
-
-                            # Ejecutar tests (|| true para no fallar pipeline por cobertura baja)
-                            pytest -v \
-                                --cov=. \
-                                --cov-report=xml:../coverage.xml \
-                                --cov-report=html:../htmlcov \
-                                --tb=short \
-                                || true
-                        '''
-                    }
+                    echo '🧪 Ejecutando tests del Backend dentro del contenedor...'
+                    sh """
+                        mkdir -p coverage-output
+                        docker run --rm \\
+                            --workdir /app \\
+                            -v \${WORKSPACE}/coverage-output:/coverage \\
+                            ${IMAGE_NAME_BACKEND}:${IMAGE_TAG} \\
+                            sh -c "pytest -v \\
+                                --cov=. \\
+                                --cov-report=xml:/coverage/coverage.xml \\
+                                --cov-report=html:/coverage/htmlcov \\
+                                --tb=short \\
+                                || true"
+                        cp coverage-output/coverage.xml coverage.xml 2>/dev/null || true
+                        cp -r coverage-output/htmlcov htmlcov 2>/dev/null || true
+                    """
                     echo '✅ Tests completados'
                 }
             }
             post {
                 always {
-                    // Publicar reporte de cobertura si existe
                     script {
                         if (fileExists('coverage.xml')) {
                             publishHTML(target: [
@@ -149,32 +149,35 @@ pipeline {
         // ─────────────────────────────────────────────
         stage('Code Analysis') {
         // ─────────────────────────────────────────────
+            // flake8 también corre dentro del contenedor para no depender del host
             steps {
                 script {
-                    echo '🔍 Analizando calidad del código...'
-                    dir('backend') {
-                        sh '''
-                            . venv/bin/activate 2>/dev/null || (python3 -m venv venv && . venv/bin/activate && pip install flake8 --quiet)
-                            pip install flake8 --quiet
+                    echo '🔍 Analizando calidad del código dentro del contenedor...'
+                    sh """
+                        docker run --rm \\
+                            --workdir /app \\
+                            ${IMAGE_NAME_BACKEND}:${IMAGE_TAG} \\
+                            sh -c "
+                                pip install flake8 --quiet --root-user-action=ignore
 
-                            echo "--- flake8: errores críticos (E9, F63, F7, F82) ---"
-                            flake8 . \
-                                --count \
-                                --select=E9,F63,F7,F82 \
-                                --show-source \
-                                --statistics \
-                                --exclude=venv,__pycache__ \
-                                || true
+                                echo '--- flake8: errores críticos (E9, F63, F7, F82) ---'
+                                flake8 . \\\\
+                                    --count \\\\
+                                    --select=E9,F63,F7,F82 \\\\
+                                    --show-source \\\\
+                                    --statistics \\\\
+                                    --exclude=venv,__pycache__ \\\\
+                                    || true
 
-                            echo "--- flake8: resumen de estilo ---"
-                            flake8 . \
-                                --count \
-                                --max-line-length=120 \
-                                --statistics \
-                                --exclude=venv,__pycache__ \
-                                || true
-                        '''
-                    }
+                                echo '--- flake8: resumen de estilo ---'
+                                flake8 . \\\\
+                                    --count \\\\
+                                    --max-line-length=120 \\\\
+                                    --statistics \\\\
+                                    --exclude=venv,__pycache__ \\\\
+                                    || true
+                            "
+                    """
                     echo '✅ Análisis de código completado'
                 }
             }
