@@ -110,7 +110,7 @@ fi
 echo ""
 echo "🚀 [3/4] Disparando deploy en Render..."
 
-DEPLOY_PAYLOAD='{"clearCache": "do_not_clear"}'
+DEPLOY_PAYLOAD='{"clearCache": false}'
 
 DEPLOY_RESPONSE=$(render_api POST "/services/${RENDER_SERVICE_ID}/deploys" "$DEPLOY_PAYLOAD" 2>&1) || {
     echo "❌ Error al disparar el deploy"
