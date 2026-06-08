@@ -46,10 +46,31 @@ class VentaCreate(BaseModel):
     precio_unitario: float
 
 
+class VentaRead(BaseModel):
+    id: int
+    fecha: date
+    tipo_arepa: str
+    cantidad: int
+    precio_unitario: float
+
+    class Config:
+        from_attributes = True
+
+
 class VariableExternaCreate(BaseModel):
     fecha: date
     clima: str
     es_festivo: bool = False
+
+
+class VariableExternaRead(BaseModel):
+    id: int
+    fecha: date
+    clima: str
+    es_festivo: bool
+
+    class Config:
+        from_attributes = True
 
 
 class PrediccionRequest(BaseModel):
@@ -101,6 +122,11 @@ def listar_inventario(db: Session = Depends(get_db)):
     return db.query(Inventario).all()
 
 
+@app.get("/ventas", response_model=List[VentaRead])
+def listar_ventas(db: Session = Depends(get_db)):
+    return db.query(Venta).order_by(Venta.fecha.desc()).all()
+
+
 @app.post("/ventas")
 def registrar_venta(venta: VentaCreate, db: Session = Depends(get_db)):
     obj = Venta(
@@ -114,6 +140,11 @@ def registrar_venta(venta: VentaCreate, db: Session = Depends(get_db)):
     return {"status": "ok"}
 
 
+@app.get("/variables", response_model=List[VariableExternaRead])
+def listar_variables(db: Session = Depends(get_db)):
+    return db.query(VariableExterna).order_by(VariableExterna.fecha.desc()).all()
+
+
 @app.post("/variables")
 def registrar_variables(var_externa: VariableExternaCreate, db: Session = Depends(get_db)):
     obj = VariableExterna(
@@ -124,6 +155,16 @@ def registrar_variables(var_externa: VariableExternaCreate, db: Session = Depend
     db.add(obj)
     db.commit()
     return {"status": "ok"}
+
+
+@app.delete("/inventario/{item_id}")
+def eliminar_ingrediente(item_id: int, db: Session = Depends(get_db)):
+    obj = db.query(Inventario).filter(Inventario.id == item_id).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Ingrediente no encontrado")
+    db.delete(obj)
+    db.commit()
+    return {"status": "ok", "deleted_id": item_id}
 
 
 @app.post("/prediccion", response_model=PrediccionResponse)

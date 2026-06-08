@@ -92,6 +92,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   if (APP_STATE.backendOnline) {
     await loadInventarioFromAPI();
+    await loadVentasFromAPI();
+    await loadVariablesFromAPI();
   } else {
     loadDataFromStorage();
   }
@@ -138,6 +140,31 @@ async function loadInventarioFromAPI() {
   } catch (e) {
     console.warn('No se pudo cargar inventario desde la API:', e.message);
     loadDataFromStorage();
+  }
+}
+
+async function loadVentasFromAPI() {
+  try {
+    const data = await apiGet('/ventas');
+    APP_STATE.ventas = data.map(v => ({
+      ...v,
+      total: v.cantidad * v.precio_unitario
+    }));
+    renderVentas();
+    console.log(`💰 Ventas cargadas desde API: ${data.length} items`);
+  } catch (e) {
+    console.warn('No se pudo cargar ventas desde la API:', e.message);
+  }
+}
+
+async function loadVariablesFromAPI() {
+  try {
+    const data = await apiGet('/variables');
+    APP_STATE.variables = data;
+    renderVariables();
+    console.log(`🌤 Variables cargadas desde API: ${data.length} items`);
+  } catch (e) {
+    console.warn('No se pudo cargar variables desde la API:', e.message);
   }
 }
 
@@ -202,11 +229,23 @@ function renderInventario() {
   updateMetrics();
 }
 
-function deleteIngredient(id) {
-  APP_STATE.inventario = APP_STATE.inventario.filter(i => i.id !== id);
-  saveDataToStorage();
-  renderInventario();
-  showToast('Ingrediente eliminado localmente', 'success');
+async function deleteIngredient(id) {
+  if (APP_STATE.backendOnline) {
+    try {
+      await fetch(`${CONFIG.API_URL}/inventario/${id}`, { method: 'DELETE' });
+      APP_STATE.inventario = APP_STATE.inventario.filter(i => i.id !== id);
+      renderInventario();
+      showToast('Ingrediente eliminado del servidor', 'success');
+    } catch (err) {
+      console.error('Error al eliminar en API:', err.message);
+      showToast('Error al eliminar en servidor', 'error');
+    }
+  } else {
+    APP_STATE.inventario = APP_STATE.inventario.filter(i => i.id !== id);
+    saveDataToStorage();
+    renderInventario();
+    showToast('Ingrediente eliminado localmente', 'success');
+  }
 }
 
 // ========== VENTAS ==========
