@@ -65,7 +65,22 @@ class PrediccionResponse(BaseModel):
 
 @app.get("/")
 def root():
-    return {"message": "ArepIA API funcionando", "docs": "/docs"}
+    from database import DATABASE_URL
+    if DATABASE_URL.startswith("postgresql"):
+        db_type = "PostgreSQL"
+        db_host = DATABASE_URL.split("@")[-1].split("/")[0] if "@" in DATABASE_URL else "remote"
+    elif DATABASE_URL.startswith("sqlite"):
+        db_type = "SQLite (local/temporal)"
+        db_host = DATABASE_URL.replace("sqlite:///", "")
+    else:
+        db_type = DATABASE_URL.split(":")[0]
+        db_host = "unknown"
+    return {
+        "message": "ArepIA API funcionando",
+        "docs": "/docs",
+        "database": db_type,
+        "db_host": db_host,
+    }
 
 
 @app.post("/inventario", response_model=InventarioRead)
