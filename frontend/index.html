@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArepIA - Gestion de Produccion con IA</title>
-    <!-- Favicon: arepa (pan plano redondo dorado) dibujado en SVG -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2255%22%20r%3D%2242%22%20fill%3D%22%23B5720A%22%2F%3E%3Cellipse%20cx%3D%2250%22%20cy%3D%2249%22%20rx%3D%2238%22%20ry%3D%2234%22%20fill%3D%22%23D4900E%22%2F%3E%3Cellipse%20cx%3D%2250%22%20cy%3D%2246%22%20rx%3D%2228%22%20ry%3D%2224%22%20fill%3D%22%23EDB830%22%2F%3E%3Cellipse%20cx%3D%2250%22%20cy%3D%2244%22%20rx%3D%2216%22%20ry%3D%2212%22%20fill%3D%22%23F5D060%22%20opacity%3D%220.65%22%2F%3E%3C%2Fsvg%3E">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,7 +14,6 @@
     <header class="header">
         <div class="header-container">
             <div class="logo-section">
-                <!-- &#x1FAD3; = flatbread / arepa emoji -->
                 <div class="logo-icon">&#x1FAD3;</div>
                 <div class="header-title">
                     <h1>ArepIA</h1>
@@ -70,7 +68,6 @@
         </aside>
 
         <main class="content-area">
-            <!-- Dashboard Tab -->
             <div id="dashboardTab" class="tab-content active">
                 <div class="section-header">
                     <h2>Panel de Control</h2>
@@ -78,7 +75,6 @@
                 </div>
                 <div class="metrics-grid">
                     <div class="metric-card">
-                        <!-- &#x1FAD3; = flatbread / arepa emoji -->
                         <div class="metric-icon blue">&#x1FAD3;</div>
                         <div class="metric-content">
                             <span class="metric-label">Producci&#xF3;n Hoy</span>
@@ -118,7 +114,6 @@
                 </div>
             </div>
 
-            <!-- Inventario Tab -->
             <div id="inventarioTab" class="tab-content">
                 <div class="section-header">
                     <h2>Gesti&#xF3;n de Inventario</h2>
@@ -157,13 +152,7 @@
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
-                                <tr>
-                                    <th>Ingrediente</th>
-                                    <th>Cantidad</th>
-                                    <th>Unidad</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
+                                <tr><th>Ingrediente</th><th>Cantidad</th><th>Unidad</th><th>Estado</th><th>Acciones</th></tr>
                             </thead>
                             <tbody id="inventarioBody">
                                 <tr class="empty-state"><td colspan="5">Sin ingredientes registrados</td></tr>
@@ -173,7 +162,6 @@
                 </div>
             </div>
 
-            <!-- Ventas Tab -->
             <div id="ventasTab" class="tab-content">
                 <div class="section-header">
                     <h2>Registro de Ventas</h2>
@@ -210,13 +198,7 @@
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Tipo de Arepa</th>
-                                    <th>Cantidad</th>
-                                    <th>Precio Unitario</th>
-                                    <th>Total</th>
-                                </tr>
+                                <tr><th>Fecha</th><th>Tipo de Arepa</th><th>Cantidad</th><th>Precio Unitario</th><th>Total</th></tr>
                             </thead>
                             <tbody id="ventasBody">
                                 <tr class="empty-state"><td colspan="5">Sin ventas registradas</td></tr>
@@ -226,7 +208,6 @@
                 </div>
             </div>
 
-            <!-- Prediccion IA Tab -->
             <div id="prediccionTab" class="tab-content">
                 <div class="section-header">
                     <h2>Predicci&#xF3;n con IA</h2>
@@ -245,32 +226,28 @@
                                 <select id="predClima">
                                     <option value="templado">Templado</option>
                                     <option value="soleado">Soleado</option>
-                                    <option value="lluvioso">Lluvioso
-                                    <option value="soleado">Soleado</option>
                                     <option value="lluvioso">Lluvioso</option>
                                     <option value="nublado">Nublado</option>
                                 </select>
                             </div>
                             <div class="form-group" style="padding-top:1.5rem;">
-                                <label>
-                                    <input type="checkbox" id="predFestivo">
-                                    Es d&#xED;a festivo
-                                </label>
+                                <label><input type="checkbox" id="predFestivo"> Es festivo</label>
                             </div>
                         </div>
                         <div class="form-actions">
-                            <button type="submit" class="btn-primary">&#x1F916; Obtener Predicci&#xF3;n</button>
+                            <button type="submit" class="btn-primary">&#x1F916; Obtener Prediccion</button>
                         </div>
                     </form>
                 </div>
             </div>
+
             <div id="variablesTab" class="tab-content">
                 <div class="section-header">
                     <h2>Variables Externas</h2>
-                    <p>Registra condiciones externas que afectan la producci&#xF3;n</p>
+                    <p>Registra condiciones externas que afectan la produccion</p>
                 </div>
                 <div class="card">
-                    <h3>Registrar Variables del D&#xED;a</h3>
+                    <h3>Registrar Variables del Dia</h3>
                     <form id="variablesForm">
                         <div class="form-row">
                             <div class="form-group">
@@ -287,10 +264,7 @@
                                 </select>
                             </div>
                             <div class="form-group" style="padding-top:1.5rem;">
-                                <label>
-                                    <input type="checkbox" id="varFestivo">
-                                    Es d&#xED;a festivo
-                                </label>
+                                <label><input type="checkbox" id="varFestivo"> Es festivo</label>
                             </div>
                         </div>
                         <div class="form-actions">
@@ -303,9 +277,14 @@
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead><tr><th>Fecha</th><th>Clima</th><th>Festivo</th></tr></thead>
-                            <tbody id="var                            <tbod                                     <tbodls                            <tbody id="var                            <tbod    >
+                            <tbody id="variablesBody">
+                                <tr class="empty-state"><td colspan="3">Sin variables registradas</td></tr>
+                            </tbody>
                         </table>
-                                                                                 in>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
     <script src="env-config.js"></script>
     <script src="app.js"></script>
