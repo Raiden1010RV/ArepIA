@@ -132,3 +132,21 @@ El equipo implementó un flujo colaborativo basado en Git, GitHub, ramas, commit
 Aunque Travis CI no permitió completar la ejecución debido a una restricción comercial y CodeShip había finalizado su vida útil, el equipo documentó ambas situaciones e implementó CircleCI como una alternativa funcional. La ejecución satisfactoria del pipeline en la rama `main` demuestra que ArepIA puede instalar sus dependencias y ejecutar pruebas automatizadas en un entorno externo y reproducible.
 
 La trazabilidad consolidada permite demostrar la participación individual de cada integrante, la evolución técnica del proyecto y la capacidad del equipo para identificar, documentar y resolver problemas propios de un proceso real de integración continua.
+
+## 8. Opiniones del Equipo sobre la Integración Continua
+
+**Cristhian Felipe Ramírez Chaves:**
+La integración continua permitió organizar y automatizar la validación del proyecto, reduciendo la dependencia de verificaciones manuales. La configuración de Jenkins, Travis CI y CircleCI demostró que el código puede adaptarse a diferentes plataformas y que los errores pueden identificarse de manera temprana.
+
+**Luis Carlos Díaz Amariles:**
+La aplicación de integración continua facilitó la conexión entre los componentes de inteligencia artificial y los demás servicios del sistema. Esta metodología contribuyó a que cada cambio pudiera ser probado antes de incorporarse a la versión principal del proyecto.
+
+**Ivon Astrid Garzón Álvarez:**
+Desde el desarrollo frontend, la integración continua brindó mayor seguridad al momento de incorporar nuevos componentes. Contar con procesos automatizados ayuda a detectar fallos y disminuye el riesgo de afectar funcionalidades previamente implementadas.
+
+**Angy Camila Aguirre Garagoa:**
+En el backend y la gestión de la base de datos, las pruebas automatizadas permitieron validar las operaciones relacionadas con inventarios, ventas y variables externas. Esto fortaleció la confiabilidad del sistema y facilitó la identificación de inconsistencias en el código.
+
+**Diana Carolina Doria Mora:**
+La integración continua permitió verificar que la arquitectura diseñada pudiera mantenerse estable durante la evolución del proyecto. La separación de responsabilidades, el uso de ramas y la validación de los cambios favorecieron una estructura más organizada, escalable y fácil de mantener.
+
