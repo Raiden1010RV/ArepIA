@@ -9,3 +9,5 @@ install:
 
 script:
   - pytest backend/test_models.py -v
+
+# Configuración inicial de validación continua para ArepIA
