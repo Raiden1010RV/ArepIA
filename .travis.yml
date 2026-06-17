@@ -1,1 +1,11 @@
+language: python
 
+python:
+  - "3.11"
+
+install:
+  - pip install --upgrade pip
+  - pip install -r backend/requirements.txt
+
+script:
+  - pytest backend/test_models.py -v
