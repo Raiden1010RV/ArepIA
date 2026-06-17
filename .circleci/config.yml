@@ -14,8 +14,8 @@ jobs:
           path: ~/project
       - python/install-packages
       - run:
-          name: Run tests
-          command: pytest --junitxml=junit.xml || ((($? == 5)) && echo 'Did not find any tests to run.')
+          name: Run backend model tests
+          command: PYTHONPATH=. pytest test_models.py -v --junitxml=junit.xml
       - store_test_results:
           path: junit.xml
   deploy:
